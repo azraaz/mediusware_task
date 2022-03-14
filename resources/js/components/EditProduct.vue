@@ -108,6 +108,10 @@ export default {
         InputTag
     },
     props: {
+        product: {
+            type: Object,
+            required: true
+        },
         variants: {
             type: Array,
             required: true
@@ -115,9 +119,9 @@ export default {
     },
     data() {
         return {
-            product_name: '',
-            product_sku: '',
-            description: '',
+            product_name: this.product.title,
+            product_sku: this.product.sku,
+            description: this.product.description,
             images: [],
             product_variant: [
                 {
@@ -127,17 +131,11 @@ export default {
             ],
             product_variant_prices: [],
             dropzoneOptions: {
-                paramName: "file",
                 autoProcessQueue: false,
-                url: '/product',
+                url: 'https://httpbin.org/post',
                 thumbnailWidth: 150,
                 maxFilesize: 0.5,
-                maxFiles: 50,
-                parallelUploads: 50,
-                addRemoveLinks: true,
-                headers: {
-                'X-CSRF-TOKEN': "{{ csrf_token() }}"
-                }
+                headers: {"My-Awesome-Header": "header value"}
             }
         }
     },
@@ -191,12 +189,13 @@ export default {
                 title: this.product_name,
                 sku: this.product_sku,
                 description: this.description,
-                product_images: this.$refs.myVueDropzone.dropzone.files,
+                product_image: this.$refs.myVueDropzone.dropzone.files,
                 product_variant: this.product_variant,
-                product_variant_prices: this.product_variant_prices
+                product_variant_prices: this.product_variant_prices,
+                _method:'PUT',
             }
 
-            axios.post('/product', product).then(response => {
+            axios.post('/product/'+this.product.id, product).then(response => {
                 console.log(response.data);
             }).catch(error => {
                 console.log(error);
@@ -206,6 +205,27 @@ export default {
     },
     mounted() {
         console.log('Component mounted.')
+        console.log(this.product)
+
+        for (const variant in this.product.variants) {
+            console.log(this.product.variants[variant])
+            var tags = [];
+            this.product.variants[variant].forEach(element => {
+                tags.push(element.variant);
+            });
+            this.product_variant.push({
+                option: variant,
+                tags: tags
+            })
+        }
+
+        this.product.variant_prices.forEach(variant => {
+            this.product_variant_prices.push({
+                    title: variant.product_variant_comb,
+                    price: variant.price,
+                    stock: variant.stock
+                })
+        });
     }
 }
 </script>
